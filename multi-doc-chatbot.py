@@ -9,9 +9,65 @@ from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import Chroma
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
+import streamlit as st
+from htmlTemplates import css, bot_template, user_template
 
+st.set_page_config(page_title="Customer service",
+                       page_icon="🤖")
+
+col1, col2, col3 = st.columns(3)
+
+#Sorry about the code being untidy. its a mix of a few github repositories and I havent had time to tidy it up.
+
+#To begin the conversation the button must be clicked, as this will clear the history of the previous conversation, preventing bugs.
+
+
+def click_button():
+    with open('chathistory.txt', 'r+') as f:
+        f.truncate(0)
+    
+
+
+st.write(css, unsafe_allow_html=True)
+with col2:
+    st.header("Customer service ")
+query = st.text_input("Your question:")
+
+st.markdown(
+    """
+<style>
+button {
+    height: 100px;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+with col2:
+    st.button('Begin conversation', on_click=click_button)  
+
+
+
+
+
+def displayconvo(history, i = 0):
+    for msg in history:
+        i += 1
+        if i % 2 != 0:
+            st.write(user_template.replace(
+                "{{MSG}}", msg), unsafe_allow_html=True)
+        else:
+            st.write(bot_template.replace(
+                "{{MSG}}", msg), unsafe_allow_html=True)
+            
+
+     
+
+
+print("test")
 load_dotenv('.env')
-
 documents = []
 # Create a List of Documents from all of our files in the ./docs folder
 for file in os.listdir("docs"):
@@ -49,17 +105,31 @@ green = "\033[0;32m"
 white = "\033[0;39m"
 
 chat_history = []
-print(f"{yellow}---------------------------------------------------------------------------------")
-print('Welcome to the DocBot. You are now ready to start interacting with your documents')
-print('---------------------------------------------------------------------------------')
+
+pastquery = None
+
+history = []
 while True:
-    query = input(f"{green}Prompt: ")
-    if query == "exit" or query == "quit" or query == "q" or query == "f":
-        print('Exiting')
-        sys.exit()
-    if query == '':
-        continue
-    result = pdf_qa.invoke(
-        {"question": query, "chat_history": chat_history})
-    print(f"{white}Answer: " + result["answer"])
-    chat_history.append((query, result["answer"]))
+    if pastquery != query and query != "":
+        f = open('chathistory.txt','a')
+        f.write(query+"\n")
+        
+        
+        
+        if query == "exit" or query == "quit" or query == "q" or query == "f":
+            print('Exiting')
+            sys.exit()
+        if query == '':
+            continue
+        result = pdf_qa.invoke(
+            {"question": query, "chat_history": chat_history})
+        print(f"{white}Answer: " + result["answer"])
+        chat_history.append((query, result["answer"]))
+        
+        f.write(result["answer"]+"\n")
+        f.close()
+        
+        f = open('chathistory.txt','r')
+        history = f.readlines()
+        displayconvo(history)
+        pastquery = query

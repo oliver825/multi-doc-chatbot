@@ -1,0 +1,2 @@
+how can i print out a pdf of the reservation
+To print out a PDF of the reservation, you can click on the "Print Summary" option in the group of Actions located at the top of the right column. This will allow you to generate a PDF format of the reservation information for printing.
